@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/idea.dart';
+import '../models/comment.dart';
 
 class IdeaService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -110,5 +111,35 @@ class IdeaService {
         .count()
         .get();
     return snap.count ?? 0;
+  }
+
+  // Commentaires
+  CollectionReference get _comments => _db.collection('comments');
+
+  Stream<List<Comment>> getComments(String ideaId) {
+    return _comments
+        .where('ideaId', isEqualTo: ideaId)
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => Comment.fromFirestore(d)).toList());
+  }
+
+  Future<void> addComment({
+    required String ideaId,
+    required String authorId,
+    required String authorName,
+    required String text,
+  }) async {
+    await _comments.add({
+      'ideaId': ideaId,
+      'authorId': authorId,
+      'authorName': authorName,
+      'text': text,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteComment(String commentId) async {
+    await _comments.doc(commentId).delete();
   }
 }

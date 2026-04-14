@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1032389854854",
+    "project_id": "boite-a-idees-f10f4",
+    "storage_bucket": "boite-a-idees-f10f4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032389854854:android:759d28f433a6a898467307",
+        "android_client_info": {
+          "package_name": "com.hcexecutive.boite_a_idees"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBChvXBTngNfZ88--M2Ybu39lIkM3tJyD0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

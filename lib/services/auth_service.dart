@@ -36,6 +36,10 @@ class AuthService {
     await _auth.signOut();
   }
 
+  Future<void> resetPassword(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
   Future<bool> isAdmin() async {
     if (currentUser == null) return false;
     final doc = await _db.collection('users').doc(currentUser!.uid).get();

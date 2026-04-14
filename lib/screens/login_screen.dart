@@ -28,6 +28,29 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _resetPassword() async {
+    if (_emailCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entrez votre email pour réinitialiser le mot de passe'), backgroundColor: AppColors.error),
+      );
+      return;
+    }
+    try {
+      await _auth.resetPassword(_emailCtrl.text.trim());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email de réinitialisation envoyé'), backgroundColor: AppColors.success),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
@@ -141,6 +164,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   : Text(_isLogin ? 'Se connecter' : "S'inscrire"),
                             ),
                             const SizedBox(height: 12),
+                            if (_isLogin)
+                              TextButton(
+                                onPressed: _resetPassword,
+                                child: const Text(
+                                  'Mot de passe oublié ?',
+                                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                ),
+                              ),
                             TextButton(
                               onPressed: () => setState(() => _isLogin = !_isLogin),
                               child: Text(

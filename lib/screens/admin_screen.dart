@@ -232,7 +232,7 @@ class _AdminIdeaCardState extends State<_AdminIdeaCard> {
                             const Text('Statut', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
-                              initialValue: _statut,
+                              value: _statut,
                               decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                               items: _statuts.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 13)))).toList(),
                               onChanged: (v) async {

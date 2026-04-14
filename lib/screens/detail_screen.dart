@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../models/idea.dart';
+import '../models/comment.dart';
 import '../services/auth_service.dart';
 import '../services/idea_service.dart';
 import '../theme/app_theme.dart';
@@ -16,8 +17,10 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   final _service = IdeaService();
   final _auth = AuthService();
+  final _commentCtrl = TextEditingController();
   bool? _liked;
   late int _likesCount;
+  bool _sendingComment = false;
 
   @override
   void initState() {
@@ -28,6 +31,12 @@ class _DetailScreenState extends State<DetailScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _toggleLike() async {
     final wasLiked = _liked ?? false;
     setState(() {
@@ -35,6 +44,23 @@ class _DetailScreenState extends State<DetailScreen> {
       _likesCount += wasLiked ? -1 : 1;
     });
     await _service.toggleLike(widget.idea.id, _auth.currentUserId);
+  }
+
+  Future<void> _sendComment() async {
+    final text = _commentCtrl.text.trim();
+    if (text.isEmpty) return;
+    setState(() => _sendingComment = true);
+    try {
+      await _service.addComment(
+        ideaId: widget.idea.id,
+        authorId: _auth.currentUserId,
+        authorName: _auth.currentUserName,
+        text: text,
+      );
+      _commentCtrl.clear();
+    } finally {
+      if (mounted) setState(() => _sendingComment = false);
+    }
   }
 
   @override
@@ -86,6 +112,7 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            // Bouton Like
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -116,7 +143,7 @@ class _DetailScreenState extends State<DetailScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _liked == true ? 'J\'aime cette idée' : 'J\'aime cette idée',
+                              _liked == true ? 'Vous aimez cette idée' : 'J\'aime cette idée',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: _liked == true ? AppColors.liked : Colors.grey,
@@ -138,8 +165,120 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            // Section commentaires
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Commentaires', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    StreamBuilder<List<Comment>>(
+                      stream: _service.getComments(idea.id),
+                      builder: (context, snap) {
+                        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                        final comments = snap.data!;
+                        if (comments.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Center(
+                              child: Text('Aucun commentaire. Soyez le premier !',
+                                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: comments.map((c) => _CommentTile(
+                            comment: c,
+                            currentUserId: _auth.currentUserId,
+                            onDelete: () => _service.deleteComment(c.id),
+                          )).toList(),
+                        );
+                      },
+                    ),
+                    const Divider(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _commentCtrl,
+                            minLines: 1,
+                            maxLines: 3,
+                            decoration: const InputDecoration(hintText: 'Ajouter un commentaire...'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _sendingComment
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                            : IconButton(
+                                icon: const Icon(Icons.send_rounded, color: AppColors.primary),
+                                onPressed: _sendComment,
+                              ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CommentTile extends StatelessWidget {
+  final Comment comment;
+  final String currentUserId;
+  final VoidCallback onDelete;
+
+  const _CommentTile({required this.comment, required this.currentUserId, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+            child: Text(
+              comment.authorName.isNotEmpty ? comment.authorName[0].toUpperCase() : '?',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(comment.authorName,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    const SizedBox(width: 6),
+                    Text(timeago.format(comment.createdAt, locale: 'fr'),
+                        style: const TextStyle(fontSize: 11, color: AppColors.textLight)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(comment.text,
+                    style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4)),
+              ],
+            ),
+          ),
+          if (comment.authorId == currentUserId)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.textLight),
+              onPressed: onDelete,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+        ],
       ),
     );
   }

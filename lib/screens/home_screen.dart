@@ -8,6 +8,7 @@ import 'detail_screen.dart';
 import 'submit_screen.dart';
 import 'ideas_screen.dart';
 import 'admin_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const SubmitScreen(),
       const IdeasScreen(),
       if (_isAdmin) const AdminScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -53,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const NavigationDestination(icon: Icon(Icons.add_circle_outline), selectedIcon: Icon(Icons.add_circle), label: 'Proposer'),
           const NavigationDestination(icon: Icon(Icons.explore_outlined), selectedIcon: Icon(Icons.explore), label: 'Idées'),
           if (_isAdmin) const NavigationDestination(icon: Icon(Icons.admin_panel_settings_outlined), selectedIcon: Icon(Icons.admin_panel_settings), label: 'Admin'),
+          const NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profil'),
         ],
       ),
     );
@@ -110,12 +113,7 @@ class _HomeTabState extends State<_HomeTab> {
                 ),
               ),
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout, color: Colors.white),
-                onPressed: () => _auth.signOut(),
-              ),
-            ],
+            actions: const [],
           ),
           SliverPadding(
             padding: const EdgeInsets.all(16),
